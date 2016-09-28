@@ -2,6 +2,8 @@
 from __future__ import print_function
 
 import getpass
+import json
+import sys
 
 from weboob.core import Weboob
 
@@ -9,7 +11,7 @@ from capabilities import bill
 from tools.jsonwriter import pretty_json
 
 
-class Connector(object):
+class WeboobProxy(object):
     """
     Connector is a tool that connects to common websites like bank website,
     phone operator website... and that grabs personal data from there.
@@ -20,10 +22,17 @@ class Connector(object):
 
     @staticmethod
     def version():
+        """
+        Return Weboob version.
+        """
         return Weboob.VERSION
 
-    def update(self):
-        return self.weboob.update()
+    @staticmethod
+    def update():
+        """
+        Ensure modules are up to date.
+        """
+        return Weboob().update()
 
     def __init__(self, modulename, parameters):
         """
@@ -45,29 +54,41 @@ class Connector(object):
         # Calls the backend.
         self.backend = self.weboob.build_backend(modulename, parameters)
 
+    def get_backend(self):
+        """
+        Get the built backend.
+        """
+        return self.backend
 
-def main(email, password=None):
+
+def main(used_modules):
     """
     Main code
     """
-    if password is None:
-        # Ask for password if not provided
-        password = getpass.getpass("Password? ")
+    # Update all available modules
+    # TODO: WeboobProxy.update()
 
-    connector = Connector(
-        "amazon",
-        {
-            "website": "www.amazon.fr",
-            "email": email,
-            "password": password
-        }
-    )
-    return bill.to_cozy(connector.backend)
+    # Fetch data for the specified modules
+    fetched_data = {}
+    for module, parameters in used_modules.items():
+        # TODO
+        fetched_data["bills"] = bill.to_cozy(
+            WeboobProxy(
+                module,
+                parameters
+            ).get_backend()
+        )
+    return fetched_data
 
 
 if __name__ == '__main__':
+    try:
+        konnectors = json.load(sys.stdin)
+    except ValueError:
+        sys.exit("Invalid input")  # TODO
+
     print(
         pretty_json(
-            main(raw_input("Email? "))
+            main(konnectors)
         )
     )
