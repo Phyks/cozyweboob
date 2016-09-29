@@ -1,14 +1,21 @@
 #!/usr/bin/env python2
+"""
+TODO
+"""
 from __future__ import print_function
 
 import getpass
+import importlib
 import json
+import logging
 import sys
 
 from weboob.core import Weboob
 
-from capabilities import bill
 from tools.jsonwriter import pretty_json
+
+# Dynamically load capabilities conversion modules
+CAPABILITIES_CONVERSION_MODULES = importlib.import_module("capabilities")
 
 
 class WeboobProxy(object):
@@ -70,25 +77,63 @@ def main(used_modules):
 
     # Fetch data for the specified modules
     fetched_data = {}
-    for module, parameters in used_modules.items():
-        # TODO
-        fetched_data["bills"] = bill.to_cozy(
-            WeboobProxy(
-                module,
-                parameters
-            ).get_backend()
-        )
+    logging.info("Start fetching from konnectors.")
+    for module in used_modules:
+        logging.info("Fetching data from module %s.", module["id"])
+        # Get associated backend for this module
+        backend = WeboobProxy(
+            module["name"],
+            module["parameters"]
+        ).get_backend()
+        # List all supported capabilities
+        for capability in backend.iter_caps():
+            # Convert capability class to string name
+            capability = capability.__name__
+            try:
+                # Get conversion function for this capability
+                fetching_function = (
+                    getattr(
+                        getattr(
+                            CAPABILITIES_CONVERSION_MODULES,
+                            capability
+                        ),
+                        "to_cozy"
+                    )
+                )
+                logging.info("Fetching capability %s.", capability)
+                # Fetch data and store them
+                # TODO: Ensure there is no overwrite
+                fetched_data[module["id"]] = fetching_function(backend)
+            except AttributeError:
+                logging.error("%s capability is not implemented.", capability)
+                continue
+    logging.info("Done fetching from konnectors.")
     return fetched_data
 
 
 if __name__ == '__main__':
     try:
-        konnectors = json.load(sys.stdin)
-    except ValueError:
-        sys.exit("Invalid input")  # TODO
-
-    print(
-        pretty_json(
-            main(konnectors)
+        logging.basicConfig(
+            format='%(levelname)s: %(message)s',
+            level=logging.INFO
         )
-    )
+        try:
+            konnectors = json.load(sys.stdin)
+            # Handle missing passwords using getpass
+            for module in range(len(konnectors)):
+                for param in konnectors[module]["parameters"]:
+                    if not konnectors[module]["parameters"][param]:
+                        konnectors[module]["parameters"][param] = getpass.getpass(
+                            "Password for module %s? " % konnectors[module]["id"]
+                        )
+        except ValueError:
+            logging.error("Invalid JSON input.")
+            sys.exit(-1)
+
+        print(
+            pretty_json(
+                main(konnectors)
+            )
+        )
+    except KeyboardInterrupt:
+        pass

@@ -1,7 +1,19 @@
-{
-    "amazon": {
-        "website": "www.amazon.fr",
-        "email": "someone@example.com",
-        "password": "MY_AWESOME_PASSWORD"
+[
+    {
+        "id": "amazon.fr",
+        "name": "amazon",
+        "parameters": {
+            "website": "www.amazon.fr",
+            "email": "someone@example.com",
+            "password": "MY_AWESOME_PASSWORD"
+        }
+    },
+    {
+        "id": "freemobile",
+        "name": "freemobile",
+        "parameters": {
+            "login": "12345678",
+            "password": ""
+        }
     }
-}
+]

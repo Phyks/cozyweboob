@@ -1,6 +1,6 @@
 import json
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 
@@ -9,7 +9,7 @@ class CustomJSONEncoder(json.JSONEncoder):
     Custom JSONEncoder to support more types.
     """
     def default(self, o):
-        if isinstance(o, datetime):
+        if isinstance(o, datetime) or isinstance(o, date):
             # Serialize datetime objects to ISO dates
             return o.isoformat()
         elif isinstance(o, Decimal):
