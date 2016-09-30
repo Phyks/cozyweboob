@@ -47,10 +47,19 @@ Each module map has a `cookies` entry containing the cookies used to fetch the
 data, so that any program running afterwards can download documents.
 
 The other entries in these maps depend on the module capabilities as defined
-by Weboob.
+by Weboob. Detailed informations about these other entires can be found in the
+`doc/capabilities` folder.
 
 
 ## License
 
 The content of this repository is licensed under an MIT license, unless
 explicitly mentionned otherwise.
+
+
+## Credits
+
+* [Cozy](http://cozy.io/) and the cozy guys on #cozycloud @ freenode
+* [Weboob](http://weboob.org/) and the weboob guys on #weboob @ freenode
+* [Kresus](https://github.com/bnjbvr/kresus/) for giving the original idea and
+  base code.

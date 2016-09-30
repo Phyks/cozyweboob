@@ -1,3 +1,4 @@
 *.pyc
+*.swp
 konnectors.json*
 out.json

@@ -1,6 +1,9 @@
 """
 This module implements a custom JSON writer to be able to serialize data
 returned by Weboob and pretty print the output JSON.
+
+Based upon
+http://stackoverflow.com/questions/11875770/how-to-overcome-datetime-datetime-not-json-serializable-in-python.
 """
 import json
 

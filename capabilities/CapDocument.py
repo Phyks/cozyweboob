@@ -23,6 +23,8 @@ def to_cozy(document):
         subscriptions = None
 
     # Fetch and clean the list of bills
+    # Bills are formatted final documents emitted by the third party (typically
+    # monthly bills for a phone service provider)
     try:
         assert subscriptions
         bills = {
@@ -37,7 +39,8 @@ def to_cozy(document):
 
     # Fetch and clean the list of details of the subscription (detailed
     # consumption)
-    # TODO: What is this?
+    # Details are aggregated billing counts (typically aggregated counts by
+    # communication type for a phone service provider)
     try:
         assert subscriptions
         detailed_bills = {
@@ -51,6 +54,8 @@ def to_cozy(document):
         detailed_bills = None
 
     # Fetch and clean the list of history bills
+    # History bills are detailed bills for any event that resulted in a bill
+    # (typically any communication for a phone service provider)
     try:
         assert subscriptions
         history_bills = {

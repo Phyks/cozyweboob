@@ -2,6 +2,9 @@
 """
 Wrapper script around Weboob to be able to use it in combination with Cozy +
 Konnectors easily.
+
+Part of this code comes from [Kresus](https://github.com/bnjbvr/kresus/)
+written by bnjbvr and released under MIT.
 """
 from __future__ import print_function
 
