@@ -56,6 +56,18 @@ class WeboobProxy(object):
         """
         Weboob().update(progress=DummyProgress())
 
+    @staticmethod
+    def list_modules(capability=None):
+        """
+        List all available modules and their configuration options.
+
+        Args:
+            capability: Restrict the modules list to a given capability.
+        Returns: A dict mapping module names to supported capabilities and
+        available configuration options.
+        """
+        pass
+
     def __init__(self, modulename, parameters):
         """
         Create a Weboob handle and try to load the modules.
