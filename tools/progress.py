@@ -12,3 +12,12 @@ class DummyProgress:
         Progress function. Do nothing.
         """
         pass
+
+    def error(self, message):
+        """
+        Error function. Do nothing.
+        """
+        pass
+
+    def prompt(self, message):
+        raise NotImplementedError()

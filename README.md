@@ -46,6 +46,10 @@ provided in input JSON file to a map of fetched data by this module.
 Each module map has a `cookies` entry containing the cookies used to fetch the
 data, so that any program running afterwards can download documents.
 
+**Important** note: Most of such websites have very short lived sessions,
+meaning in most cases these `cookies` will be useless for extra download as
+the session will most likely be destroyed on the server side.
+
 The other entries in these maps depend on the module capabilities as defined
 by Weboob. Detailed informations about these other entires can be found in the
 `doc/capabilities` folder.
