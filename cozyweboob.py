@@ -1,20 +1,25 @@
 #!/usr/bin/env python2
 """
-TODO
+Wrapper script around Weboob to be able to use it in combination with Cozy +
+Konnectors easily.
 """
 from __future__ import print_function
 
+import collections
 import getpass
 import importlib
 import json
 import logging
 import sys
 
+from requests.utils import dict_from_cookiejar
 from weboob.core import Weboob
 
 from tools.jsonwriter import pretty_json
+from tools.progress import DummyProgress
 
 # Dynamically load capabilities conversion modules
+# Dynamic loading is required to be able to call them programatically.
 CAPABILITIES_CONVERSION_MODULES = importlib.import_module("capabilities")
 
 
@@ -30,7 +35,10 @@ class WeboobProxy(object):
     @staticmethod
     def version():
         """
-        Return Weboob version.
+        Get Weboob version.
+
+        Returns:
+            the version of installed Weboob.
         """
         return Weboob.VERSION
 
@@ -39,31 +47,32 @@ class WeboobProxy(object):
         """
         Ensure modules are up to date.
         """
-        return Weboob().update()
+        Weboob().update()
 
     def __init__(self, modulename, parameters):
         """
         Create a Weboob handle and try to load the modules.
+
+        Args:
+            modulename: the name of the weboob module to use.
+            parameters: A dict of parameters to pass the weboob module.
         """
+        # Get a weboob instance
         self.weboob = Weboob()
-
-        # Careful: this is extracted from weboob's code.
         # Install the module if necessary and hide the progress.
-        class DummyProgress:
-            def progress(self, a, b):
-                pass
-
         repositories = self.weboob.repositories
         minfo = repositories.get_module_info(modulename)
         if minfo is not None and not minfo.is_installed():
             repositories.install(minfo, progress=DummyProgress())
-
-        # Calls the backend.
+        # Build a backend for this module
         self.backend = self.weboob.build_backend(modulename, parameters)
 
     def get_backend(self):
         """
-        Get the built backend.
+        Backend getter.
+
+        Returns:
+            the built backend.
         """
         return self.backend
 
@@ -71,12 +80,16 @@ class WeboobProxy(object):
 def main(used_modules):
     """
     Main code
+
+    Args:
+        used_modules: A list of modules description dicts.
+    Returns: A dict of all the results, ready to be JSON serialized.
     """
     # Update all available modules
     # TODO: WeboobProxy.update()
 
     # Fetch data for the specified modules
-    fetched_data = {}
+    fetched_data = collections.defaultdict(dict)
     logging.info("Start fetching from konnectors.")
     for module in used_modules:
         logging.info("Fetching data from module %s.", module["id"])
@@ -85,12 +98,10 @@ def main(used_modules):
             module["name"],
             module["parameters"]
         ).get_backend()
-        # List all supported capabilities
-        for capability in backend.iter_caps():
-            # Convert capability class to string name
+        for capability in backend.iter_caps():  # Supported capabilities
+            # Get capability class name for dynamic import of converter
             capability = capability.__name__
             try:
-                # Get conversion function for this capability
                 fetching_function = (
                     getattr(
                         getattr(
@@ -101,25 +112,32 @@ def main(used_modules):
                     )
                 )
                 logging.info("Fetching capability %s.", capability)
-                # Fetch data and store them
-                # TODO: Ensure there is no overwrite
-                fetched_data[module["id"]] = fetching_function(backend)
+                # Fetch data and merge them with the ones from other
+                # capabilities
+                fetched_data[module["id"]].update(fetching_function(backend))
             except AttributeError:
+                # In case the converter does not exist on our side
                 logging.error("%s capability is not implemented.", capability)
                 continue
+        # Store session cookie of this module, to fetch files afterwards
+        fetched_data[module["id"]]["cookies"] = dict_from_cookiejar(
+            backend.browser.session.cookies
+        )
     logging.info("Done fetching from konnectors.")
     return fetched_data
 
 
 if __name__ == '__main__':
     try:
+        # Dev: Set logging level and format
         logging.basicConfig(
             format='%(levelname)s: %(message)s',
             level=logging.INFO
         )
         try:
+            # Fetch konnectors JSON description from stdin
             konnectors = json.load(sys.stdin)
-            # Handle missing passwords using getpass
+            # Dev: Handle missing passwords using getpass
             for module in range(len(konnectors)):
                 for param in konnectors[module]["parameters"]:
                     if not konnectors[module]["parameters"][param]:
@@ -130,6 +148,7 @@ if __name__ == '__main__':
             logging.error("Invalid JSON input.")
             sys.exit(-1)
 
+        # Output the JSON formatted results on stdout
         print(
             pretty_json(
                 main(konnectors)

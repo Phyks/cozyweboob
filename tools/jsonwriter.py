@@ -1,3 +1,7 @@
+"""
+This module implements a custom JSON writer to be able to serialize data
+returned by Weboob and pretty print the output JSON.
+"""
 import json
 
 from datetime import date, datetime
@@ -18,10 +22,15 @@ class CustomJSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def pretty_json(foo):
+def pretty_json(obj):
     """
     Pretty printing of JSON output, using the custom JSONEncoder.
+
+    Args:
+        obj: the object to JSON serialize.
+    Returns:
+        the pretty printed JSON string.
     """
-    return json.dumps(foo, sort_keys=True,
+    return json.dumps(obj, sort_keys=True,
                       indent=4, separators=(',', ': '),
                       cls=CustomJSONEncoder)
