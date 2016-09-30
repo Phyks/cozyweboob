@@ -47,7 +47,7 @@ class WeboobProxy(object):
         """
         Ensure modules are up to date.
         """
-        Weboob().update()
+        Weboob().update(progress=DummyProgress())
 
     def __init__(self, modulename, parameters):
         """
@@ -86,7 +86,9 @@ def main(used_modules):
     Returns: A dict of all the results, ready to be JSON serialized.
     """
     # Update all available modules
-    # TODO: WeboobProxy.update()
+    logging.info("Update all available modules.")
+    WeboobProxy.update()
+    logging.info("Done updating available modules.")
 
     # Fetch data for the specified modules
     fetched_data = collections.defaultdict(dict)
