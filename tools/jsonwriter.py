@@ -22,6 +22,9 @@ class CustomJSONEncoder(json.JSONEncoder):
         elif isinstance(o, Decimal):
             # Serialize Decimal objects to string
             return str(o)
+        elif isinstance(o, Exception):
+            # Serialize Exception objects to string representation
+            return repr(o)
         return json.JSONEncoder.default(self, o)
 
 

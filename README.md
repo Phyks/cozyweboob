@@ -15,10 +15,44 @@ communicate with JSON pipes.
 
 First, you need to have Weboob installed on your system.
 
-Then, typical command-line usage is:
+## Cozyweboob script
+
+Typical command-line usage for this script is:
 ```bash
 cat konnectors.json | ./cozyweboob.py
 ```
+where `konnectors.json` is a valid JSON file defining konnectors to be used.
+
+
+## Server script
+
+Typical command-line usage for this script is:
+```bash
+./server.py
+```
+This script spawns a Bottle webserver, listening on `localhost:8080` (by
+default).
+
+It has a single route, the index route, which supports `POST` method to send a
+valid JSON string defining konnectors to be used in a `params` field. Typical
+example to send it some content is:
+```bash
+curl -X POST --data "params=$(cat konnectors.json)" "http://localhost:8080/"
+```
+where `konnectors.json` is a valid JSON file defining konnectors to be used.
+
+Note: You can specify the host and port to listen on using the
+`COZYWEBOOB_HOST` and `COZYWEBOOB_PORT` environment variables.
+
+
+## Notes concerning all the available scripts
+
+Using `COZYWEBOOB_ENV=debug`, you can enable debug features for all of these
+scripts, which might be useful for development. These features are:
+* Logging
+* If you pass a blank field in a JSON konnector description
+(typically `password: ""`), the script will ask you its value at runtime,
+using `getpass`.
 
 
 ## Input JSON file
@@ -53,6 +87,15 @@ the session will most likely be destroyed on the server side.
 The other entries in these maps depend on the module capabilities as defined
 by Weboob. Detailed informations about these other entires can be found in the
 `doc/capabilities` folder.
+
+
+## Contributing
+
+All contributions are welcome. Feel free to make a PR :)
+
+Python code is currently Python 2, but should be Python 3 compatible as Weboob
+is moving towards Python 3. All Python code should be PEP8 compliant. I use
+some extra rules, taken from PyLint.
 
 
 ## License

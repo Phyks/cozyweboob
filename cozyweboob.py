@@ -18,12 +18,16 @@ import sys
 from requests.utils import dict_from_cookiejar
 from weboob.core import Weboob
 
+from tools.env import is_in_debug_mode
 from tools.jsonwriter import pretty_json
 from tools.progress import DummyProgress
 
 # Dynamically load capabilities conversion modules
 # Dynamic loading is required to be able to call them programatically.
 CAPABILITIES_CONVERSION_MODULES = importlib.import_module("capabilities")
+
+# Module specific logger
+logger = logging.getLogger(__name__)
 
 
 class WeboobProxy(object):
@@ -80,88 +84,109 @@ class WeboobProxy(object):
         return self.backend
 
 
-def main(used_modules):
+def mainFetch(used_modules):
     """
-    Main code
+    Main fetching code
 
     Args:
         used_modules: A list of modules description dicts.
     Returns: A dict of all the results, ready to be JSON serialized.
     """
     # Update all available modules
-    logging.info("Update all available modules.")
+    logger.info("Update all available modules.")
     WeboobProxy.update()
-    logging.info("Done updating available modules.")
+    logger.info("Done updating available modules.")
 
     # Fetch data for the specified modules
     fetched_data = collections.defaultdict(dict)
-    logging.info("Start fetching from konnectors.")
+    logger.info("Start fetching from konnectors.")
     for module in used_modules:
-        logging.info("Fetching data from module %s.", module["id"])
-        # Get associated backend for this module
-        backend = WeboobProxy(
-            module["name"],
-            module["parameters"]
-        ).get_backend()
-        for capability in backend.iter_caps():  # Supported capabilities
-            # Get capability class name for dynamic import of converter
-            capability = capability.__name__
-            try:
-                fetching_function = (
-                    getattr(
-                        getattr(
-                            CAPABILITIES_CONVERSION_MODULES,
-                            capability
-                        ),
-                        "to_cozy"
-                    )
-                )
-                logging.info("Fetching capability %s.", capability)
-                # Fetch data and merge them with the ones from other
-                # capabilities
-                fetched_data[module["id"]].update(fetching_function(backend))
-            except AttributeError:
-                # In case the converter does not exist on our side
-                logging.error("%s capability is not implemented.", capability)
-                continue
-        # Store session cookie of this module, to fetch files afterwards
         try:
-            fetched_data[module["id"]]["cookies"] = dict_from_cookiejar(
-                backend.browser.session.cookies
-            )
-        except AttributeError:
-            # Avoid an AttributeError if no session is used for this module
-            fetched_data[module["id"]]["cookies"] = None
-    logging.info("Done fetching from konnectors.")
+            logger.info("Fetching data from module %s.", module["id"])
+            # Get associated backend for this module
+            backend = WeboobProxy(
+                module["name"],
+                module["parameters"]
+            ).get_backend()
+            for capability in backend.iter_caps():  # Supported capabilities
+                # Get capability class name for dynamic import of converter
+                capability = capability.__name__
+                try:
+                    fetching_function = (
+                        getattr(
+                            getattr(
+                                CAPABILITIES_CONVERSION_MODULES,
+                                capability
+                            ),
+                            "to_cozy"
+                        )
+                    )
+                    logger.info("Fetching capability %s.", capability)
+                    # Fetch data and merge them with the ones from other
+                    # capabilities
+                    fetched_data[module["id"]].update(fetching_function(backend))
+                except AttributeError:
+                    # In case the converter does not exist on our side
+                    logger.error("%s capability is not implemented.", capability)
+                    continue
+            # Store session cookie of this module, to fetch files afterwards
+            try:
+                fetched_data[module["id"]]["cookies"] = dict_from_cookiejar(
+                    backend.browser.session.cookies
+                )
+            except AttributeError:
+                # Avoid an AttributeError if no session is used for this module
+                fetched_data[module["id"]]["cookies"] = None
+        except Exception as e:
+            # Store any error happening in a dedicated field
+            fetched_data[module["id"]]["error"] = e
+            if is_in_debug_mode():
+                # Reraise if in debug
+                raise
+            else:
+                # Skip any errored module when not in debug
+                continue
+    logger.info("Done fetching from konnectors.")
     return fetched_data
 
 
-if __name__ == '__main__':
+def main(json_params):
+    """
+    Main code
+
+    Args:
+        json_params: A JSON string representing the params to use.
+    Returns: A JSON string of the results.
+    """
     try:
-        # Dev: Set logging level and format
-        logging.basicConfig(
-            format='%(levelname)s: %(message)s',
-            level=logging.INFO
-        )
-        try:
-            # Fetch konnectors JSON description from stdin
-            konnectors = json.load(sys.stdin)
-            # Dev: Handle missing passwords using getpass
+        # Fetch konnectors JSON description from stdin
+        konnectors = json.loads(json_params)
+        # Debug only: Handle missing passwords using getpass
+        if is_in_debug_mode():
             for module in range(len(konnectors)):
                 for param in konnectors[module]["parameters"]:
                     if not konnectors[module]["parameters"][param]:
                         konnectors[module]["parameters"][param] = getpass.getpass(
                             "Password for module %s? " % konnectors[module]["id"]
                         )
-        except ValueError:
-            logging.error("Invalid JSON input.")
-            sys.exit(-1)
+    except ValueError:
+        logger.error("Invalid JSON input.")
+        sys.exit(-1)
 
-        # Output the JSON formatted results on stdout
-        print(
-            pretty_json(
-                main(konnectors)
+    # Output the JSON formatted results on stdout
+    return pretty_json(
+        mainFetch(konnectors)
+    )
+
+
+if __name__ == '__main__':
+    try:
+        # Debug only: Set logging level and format
+        if is_in_debug_mode():
+            logging.basicConfig(
+                format='%(levelname)s: %(message)s',
+                level=logging.INFO
             )
-        )
+        print(main(sys.stdin.read()))
     except KeyboardInterrupt:
         pass
