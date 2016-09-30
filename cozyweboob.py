@@ -120,9 +120,13 @@ def main(used_modules):
                 logging.error("%s capability is not implemented.", capability)
                 continue
         # Store session cookie of this module, to fetch files afterwards
-        fetched_data[module["id"]]["cookies"] = dict_from_cookiejar(
-            backend.browser.session.cookies
-        )
+        try:
+            fetched_data[module["id"]]["cookies"] = dict_from_cookiejar(
+                backend.browser.session.cookies
+            )
+        except AttributeError:
+            # Avoid an AttributeError if no session is used for this module
+            fetched_data[module["id"]]["cookies"] = None
     logging.info("Done fetching from konnectors.")
     return fetched_data
 
