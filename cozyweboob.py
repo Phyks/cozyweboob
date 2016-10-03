@@ -9,11 +9,12 @@ written by bnjbvr and released under MIT.
 from __future__ import print_function
 
 import collections
-import getpass
 import importlib
 import json
 import logging
 import sys
+
+from getpass import getpass
 
 from requests.utils import dict_from_cookiejar
 from weboob.core import Weboob
@@ -56,54 +57,48 @@ class WeboobProxy(object):
         """
         Weboob().update(progress=DummyProgress())
 
-    @staticmethod
-    def list_modules(capability=None):
+    def __init__(self):
+        """
+        Create a Weboob handle.
+        """
+        # Get a weboob instance
+        self.weboob = Weboob()
+        self.backend = None
+
+    def install_modules(self, capability=None, name=None):
         """
         List all available modules and their configuration options.
 
         Args:
-            capability: Restrict the modules list to a given capability.
-        Returns: A dict mapping module names to supported capabilities and
-        available configuration options.
+            capability: Restrict the modules to install to a given capability.
+            name: Only install the specified module.
+        Returns: The list of installed module infos.
         """
-        available_modules = {}
-        moduleInfos = Weboob().repositories.get_all_modules_info(capability)
-        for module in moduleInfos:
-            available_modules[module] = {
-                "infos": dict(moduleInfos[module].dump()),
-                "config": None  # TODO: Get config options from module
-            }
-        return available_modules
-
-    def __init__(self, modulename, parameters):
-        """
-        Create a Weboob handle and try to load the modules.
-
-        Args:
-            modulename: the name of the weboob module to use.
-            parameters: A dict of parameters to pass the weboob module.
-        """
-        # Get a weboob instance
-        self.weboob = Weboob()
-        # Install the module if necessary and hide the progress.
         repositories = self.weboob.repositories
-        minfo = repositories.get_module_info(modulename)
-        if minfo is not None and not minfo.is_installed():
-            repositories.install(minfo, progress=DummyProgress())
-        # Build a backend for this module
-        self.backend = self.weboob.build_backend(modulename, parameters)
+        if name:
+            modules = [repositories.get_module_info(name)]
+        else:
+            modules = repositories.get_all_modules_info(capability)
+        for module in modules:
+            if module is not None and not module.is_installed():
+                repositories.install(module, progress=DummyProgress())
+        return modules
 
-    def get_backend(self):
+    def init_backend(self, modulename, parameters):
         """
-        Backend getter.
+        Backend initialization.
 
         Returns:
             the built backend.
         """
+        # Ensure module is installed
+        self.install_modules(name=modulename)
+        # Build backend
+        self.backend = self.weboob.build_backend(modulename, parameters)
         return self.backend
 
 
-def mainFetch(used_modules):
+def main_fetch(used_modules):
     """
     Main fetching code
 
@@ -121,12 +116,13 @@ def mainFetch(used_modules):
     logger.info("Start fetching from konnectors.")
     for module in used_modules:
         try:
+            weboob_proxy = WeboobProxy()
             logger.info("Fetching data from module %s.", module["id"])
             # Get associated backend for this module
-            backend = WeboobProxy(
+            backend = weboob_proxy.init_backend(
                 module["name"],
                 module["parameters"]
-            ).get_backend()
+            )
             for capability in backend.iter_caps():  # Supported capabilities
                 # Get capability class name for dynamic import of converter
                 capability = capability.__name__
@@ -143,10 +139,13 @@ def mainFetch(used_modules):
                     logger.info("Fetching capability %s.", capability)
                     # Fetch data and merge them with the ones from other
                     # capabilities
-                    fetched_data[module["id"]].update(fetching_function(backend))
+                    fetched_data[module["id"]].update(
+                        fetching_function(backend)
+                    )
                 except AttributeError:
                     # In case the converter does not exist on our side
-                    logger.error("%s capability is not implemented.", capability)
+                    logger.error("%s capability is not implemented.",
+                                 capability)
                     continue
             # Store session cookie of this module, to fetch files afterwards
             try:
@@ -182,11 +181,13 @@ def main(json_params):
         konnectors = json.loads(json_params)
         # Debug only: Handle missing passwords using getpass
         if is_in_debug_mode():
-            for module in range(len(konnectors)):
-                for param in konnectors[module]["parameters"]:
-                    if not konnectors[module]["parameters"][param]:
-                        konnectors[module]["parameters"][param] = getpass.getpass(
-                            "Password for module %s? " % konnectors[module]["id"]
+            for module in konnectors:
+                for param in module["parameters"]:
+                    if not module["parameters"][param]:
+                        module["parameters"][param] = getpass(
+                            "Password for module %s? " % (
+                                module["id"],
+                            )
                         )
     except ValueError:
         logger.error("Invalid JSON input.")
@@ -194,7 +195,7 @@ def main(json_params):
 
     # Output the JSON formatted results on stdout
     return pretty_json(
-        mainFetch(konnectors)
+        main_fetch(konnectors)
     )
 
 
