@@ -41,6 +41,12 @@ curl -X POST --data "params=$(cat konnectors.json)" "http://localhost:8080/"
 ```
 where `konnectors.json` is a valid JSON file defining konnectors to be used.
 
+
+The server also exposes a `/list` endpoint, which will provide you a JSON dump
+of all the available modules, their descriptions and the configuration options
+you should provide them.
+
+
 Note: You can specify the host and port to listen on using the
 `COZYWEBOOB_HOST` and `COZYWEBOOB_PORT` environment variables.
 
