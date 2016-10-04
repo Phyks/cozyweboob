@@ -18,10 +18,12 @@ from getpass import getpass
 
 from requests.utils import dict_from_cookiejar
 from weboob.core import Weboob
+from weboob.exceptions import ModuleInstallError
 
 from tools.env import is_in_debug_mode
 from tools.jsonwriter import pretty_json
 from tools.progress import DummyProgress
+import tools.weboob_tools as weboob_tools
 
 # Dynamically load capabilities conversion modules
 # Dynamic loading is required to be able to call them programatically.
@@ -50,13 +52,6 @@ class WeboobProxy(object):
         """
         return Weboob.VERSION
 
-    @staticmethod
-    def update():
-        """
-        Ensure modules are up to date.
-        """
-        Weboob().update(progress=DummyProgress())
-
     def __init__(self):
         """
         Create a Weboob handle.
@@ -67,22 +62,59 @@ class WeboobProxy(object):
 
     def install_modules(self, capability=None, name=None):
         """
-        List all available modules and their configuration options.
+        Ensure latest version of modules is installed.
+
+        Args:
+            capability: Restrict the modules to install to a given capability.
+            name: Only install the specified module.
+        Returns: A map between name and infos for all installed modules.
+        """
+        repositories = self.weboob.repositories
+        # Update modules list
+        repositories.update_repositories(DummyProgress())
+        # Get module infos
+        if name:
+            modules = {name: repositories.get_module_info(name)}
+        else:
+            modules = repositories.get_all_modules_info(capability)
+        # Install modules if required
+        for infos in modules.values():
+            if infos is not None and (
+                not infos.is_installed() or
+                not infos.is_local()
+            ):
+                try:
+                    repositories.install(infos, progress=DummyProgress())
+                except ModuleInstallError as e:
+                    logger.info(str(e))
+        return {
+            module_name: dict(infos.dump())
+            for module_name, infos in modules.items()
+            if infos.is_installed()
+        }
+
+    def list_modules(self, capability=None, name=None):
+        """
+        Ensure latest version of modules is installed.
 
         Args:
             capability: Restrict the modules to install to a given capability.
             name: Only install the specified module.
         Returns: The list of installed module infos.
         """
-        repositories = self.weboob.repositories
-        if name:
-            modules = [repositories.get_module_info(name)]
-        else:
-            modules = repositories.get_all_modules_info(capability)
-        for module in modules:
-            if module is not None and not module.is_installed():
-                repositories.install(module, progress=DummyProgress())
-        return modules
+        # Update modules and get the latest up to date list
+        installed_modules = self.install_modules(
+            capability=capability,
+            name=name
+        )
+        # For each module, get back its config options and website base url
+        for module_name in installed_modules:
+            module = self.weboob.modules_loader.get_or_load_module(module_name)
+            installed_modules[module_name]["config"] = (
+                weboob_tools.dictify_config_desc(module.config)
+            )
+            installed_modules[module_name]["website"] = module.website
+        return installed_modules
 
     def init_backend(self, modulename, parameters):
         """
@@ -106,11 +138,6 @@ def main_fetch(used_modules):
         used_modules: A list of modules description dicts.
     Returns: A dict of all the results, ready to be JSON serialized.
     """
-    # Update all available modules
-    logger.info("Update all available modules.")
-    WeboobProxy.update()
-    logger.info("Done updating available modules.")
-
     # Fetch data for the specified modules
     fetched_data = collections.defaultdict(dict)
     logger.info("Start fetching from konnectors.")
