@@ -64,7 +64,7 @@ integrate it with Node modules using
 Then, you can write on `stdin` and fetch the responses from `stdout`.
 Available commands are:
 * `GET /list` to list all available modules.
-* `GET /fetch JSON_PARAMS` where `JSON_PARAMS` is an input JSON for module
+* `POST /fetch JSON_PARAMS` where `JSON_PARAMS` is an input JSON for module
   parameters.
 * `exit` to quit the script and end the conversation.
 

@@ -48,7 +48,7 @@ def process_query(query):
         # List modules view
         logger.info("Calling /list view.")
         return list_view()
-    elif query.startswith("GET /fetch"):
+    elif query.startswith("POST /fetch"):
         # Fetch modules view
         logger.info("Calling /list view.")
         params = query.split()[2]
