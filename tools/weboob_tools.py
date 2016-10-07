@@ -5,7 +5,7 @@ from weboob.tools.value import (ValueBackendPassword, ValueInt, ValueFloat,
                                 ValueBool)
 
 
-def value_to_string(value):
+def Value_to_string(value):
     """
     Convert a Value definition from Weboob to a string describing the field
     type.
@@ -35,6 +35,15 @@ def dictify_config_desc(config):
     Returns: A JSON-serializable dict.
     """
     return {
-        name: value_to_string(value)
+        name: {
+            "type": Value_to_string(value),
+            "label": value.label,
+            "required": value.required,
+            "default": value.default,
+            "masked": value.masked,
+            "regexp": value.regexp,
+            "choices": value.choices,
+            "tiny": value.tiny
+        }
         for name, value in config.items()
     }
