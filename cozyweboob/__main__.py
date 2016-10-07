@@ -1,4 +1,5 @@
 """
+Main script for this module
 """
 from __future__ import print_function
 
@@ -63,7 +64,11 @@ def main_fetch(used_modules):
                     # Fetch data and merge them with the ones from other
                     # capabilities
                     fetched_data[module["id"]].update(
-                        fetching_function(backend)
+                        fetching_function(
+                            backend,
+                            # If no actions specified, fetch but don't download
+                            module.get("actions", {"fetch": True, "download": False})
+                        )
                     )
                 except AttributeError:
                     # In case the converter does not exist on our side

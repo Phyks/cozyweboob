@@ -6,26 +6,34 @@ from base import clean_object
 from weboob.capabilities.bill import Bill
 
 
-def to_cozy(document):
+def fetch_subscriptions(document):
     """
-    Export a CapDocument object to a JSON-serializable dict, to pass it to Cozy
-    instance.
+    Fetch the list of subscriptions
 
     Args:
         document: The CapDocument object to handle.
-    Returns: A JSON-serializable dict for the input object.
+    Returns: A list of subscriptions
     """
-    # Get the BASEURL to generate absolute URLs
-    base_url = document.browser.BASEURL
-    # Fetch the list of subscriptions
     try:
         subscriptions = list(document.iter_subscription())
     except NotImplementedError:
         subscriptions = None
+    return subscriptions
 
-    # Fetch and clean the list of bills
-    # Bills are formatted final documents emitted by the third party (typically
-    # monthly bills for a phone service provider)
+
+def fetch_documents(document, subscriptions):
+    """
+    Fetch and clean the list of bills
+
+    Bills are formatted final documents emitted by the third party (typically
+    monthly bills for a phone service provider)
+    Documents are more general and can be contracts, terms etc.
+
+    Args:
+        document: The CapDocument object to handle.
+        subscriptions: A list of subscriptions for the CapDocument object.
+    Returns: A tuple of cleaned list of documents and bills.
+    """
     try:
         assert subscriptions
         raw_documents = {
@@ -53,11 +61,22 @@ def to_cozy(document):
     except (NotImplementedError, AssertionError):
         documents = None
         bills = None
+    return documents, bills
 
-    # Fetch and clean the list of details of the subscription (detailed
-    # consumption)
-    # Details are aggregated billing counts (typically aggregated counts by
-    # communication type for a phone service provider)
+
+def fetch_details(document, subscriptions):
+    """
+    Fetch and clean the list of details of the subscription (detailed
+    consumption)
+
+    Details are aggregated billing counts (typically aggregated counts by
+    communication type for a phone service provider)
+
+    Args:
+        document: The CapDocument object to handle.
+        subscriptions: A list of subscriptions for the CapDocument object.
+    Returns: A cleaned list of detailed bills.
+    """
     try:
         assert subscriptions
         detailed_bills = {
@@ -69,10 +88,21 @@ def to_cozy(document):
         }
     except (NotImplementedError, AssertionError):
         detailed_bills = None
+    return detailed_bills
 
-    # Fetch and clean the list of history bills
-    # History bills are detailed bills for any event that resulted in a bill
-    # (typically any communication for a phone service provider)
+
+def fetch_history(document, subscriptions):
+    """
+    Fetch and clean the list of history bills
+
+    History bills are detailed bills for any event that resulted in a bill
+    (typically any communication for a phone service provider)
+
+    Args:
+        document: The CapDocument object to handle.
+        subscriptions: A list of subscriptions for the CapDocument object.
+    Returns: A cleaned list of history bills.
+    """
     try:
         assert subscriptions
         history_bills = {
@@ -85,6 +115,40 @@ def to_cozy(document):
         }
     except (NotImplementedError, AssertionError):
         history_bills = None
+    return history_bills
+
+
+
+def to_cozy(document, actions={"fetch": True, "download": False}):
+    """
+    Export a CapDocument object to a JSON-serializable dict, to pass it to Cozy
+    instance.
+
+    Args:
+        document: The CapDocument object to handle.
+        actions: A dict describing what should be fetched (see README.md).
+    Returns: A JSON-serializable dict for the input object.
+    """
+    # Get the BASEURL to generate absolute URLs
+    base_url = document.browser.BASEURL
+
+    if actions["fetch"] is True or "CapDocument" in actions["fetch"]:
+        subscriptions = fetch_subscriptions(document)
+
+        if actions["fetch"] is True or "documents" in actions["fetch"]["CapDocument"]:
+            documents, bills = fetch_documents(document, subscriptions)
+        else:
+            documents, bills = None, None
+
+        if actions["fetch"] is True or "detailed_bills" in actions["fetch"]["CapDocument"]:
+            detailed_bills = fetch_details(document, subscriptions)
+        else:
+            detailed_bills = None
+
+        if actions["fetch"] is True or "history_bills" in actions["fetch"]["CapDocument"]:
+            history_bills = fetch_history(document, subscriptions)
+        else:
+            history_bills = None
 
     # Return a formatted dict with all the infos
     return {

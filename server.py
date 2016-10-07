@@ -26,6 +26,16 @@ def fetch_view():
     return pretty_json(cozyweboob(params))
 
 
+@post("/download")
+def download_view():
+    """
+    Download from weboob modules.
+    """
+    params = request.forms.get("params")
+    response.content_type = "application/json"
+    # TODO return pretty_json(proxy.download(params))
+
+
 @route("/list")
 def list_view():
     """

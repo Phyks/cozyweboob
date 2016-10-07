@@ -101,6 +101,15 @@ map should have at the following three keys:
   required by the associated Weboob backend.
 * `id` should be a unique string of your choice, to uniquely identify this run
   of the specified module with the specified set of parameters.
+* `actions` is an optional list of actions to perform. It should contains two
+  keys, `fetch` and `download`. For each key, you can either pass `true` to
+  completely handle the actions, or a map of capabilities associated to list
+  of contents to fetch.
+  Typically, you can pass `"fetch": { "CapDocument": ["bills"]}` to fetch only
+  bills from the `CapDocuments` capability. You can also pass
+  `"download": { "CapDocument": ["someID"] }` to download a specific id (which
+  can be either type of fields in the `CapDocument` capability).
+  If not provided, the default is to fetch only, and do not download anything.
 
 
 ## Output JSON file
