@@ -51,6 +51,31 @@ Note: You can specify the host and port to listen on using the
 `COZYWEBOOB_HOST` and `COZYWEBOOB_PORT` environment variables.
 
 
+## Conversation script
+
+There is another command-line script available if you would rather communicate
+with it in a conversation manner, using `stdin` and `stdout` (typically to
+integrate it with Node modules using
+[Python-shell](https://github.com/extrabacon/python-shell)). To run it, use:
+```bash
+./stdin_conversation.py
+```
+
+Then, you can write on `stdin` and fetch the responses from `stdout`.
+Available commands are:
+* `GET /list` to list all available modules.
+* `GET /fetch JSON_PARAMS` where `JSON_PARAMS` is an input JSON for module
+  parameters.
+* `exit` to quit the script and end the conversation.
+
+JSON responses are the same one as from the HTTP server script. It is
+basically the same script without HTTP encapsulation.
+
+_Note_: To simplify the script, note that it only supports single line
+commands. Then, your `JSON_PARAMS` should be the same single `stdin` line as
+the `GET /fetch` part.
+
+
 ## Notes concerning all the available scripts
 
 Using `COZYWEBOOB_ENV=debug`, you can enable debug features for all of these

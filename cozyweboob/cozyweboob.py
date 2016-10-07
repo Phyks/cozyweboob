@@ -27,7 +27,7 @@ import tools.weboob_tools as weboob_tools
 
 # Dynamically load capabilities conversion modules
 # Dynamic loading is required to be able to call them programatically.
-CAPABILITIES_CONVERSION_MODULES = importlib.import_module("capabilities")
+CAPABILITIES_CONVERSION_MODULES = importlib.import_module("cozyweboob.capabilities")
 
 # Module specific logger
 logger = logging.getLogger(__name__)
