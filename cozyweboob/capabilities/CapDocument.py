@@ -3,6 +3,7 @@ This module contains all the conversion functions associated to the Document
 capability.
 """
 from base import clean_object
+from weboob.capabilities.bill import Bill
 
 
 def to_cozy(document):
@@ -27,14 +28,30 @@ def to_cozy(document):
     # monthly bills for a phone service provider)
     try:
         assert subscriptions
-        bills = {
-            subscription.id: [
-                clean_object(bill, base_url=base_url)
-                for bill in document.iter_documents(subscription)
-            ]
+        raw_documents = {
+            subscription.id: list(document.iter_documents(subscription))
             for subscription in subscriptions
         }
+        raw_bills = {
+            subscription: [bill for bill in documents if isinstance(bill, Bill)]
+            for subscription, documents in raw_documents.items()
+        }
+        bills = {
+            subscription: [
+                clean_object(bill, base_url=base_url)
+                for bill in bills_list
+            ]
+            for subscription, bills_list in raw_bills.items()
+        }
+        documents = {
+            subscription: [
+                clean_object(bill, base_url=base_url)
+                for bill in documents_list if bill not in raw_bills[subscription]
+            ]
+            for subscription, documents_list in raw_documents.items()
+        }
     except (NotImplementedError, AssertionError):
+        documents = None
         bills = None
 
     # Fetch and clean the list of details of the subscription (detailed
@@ -77,5 +94,6 @@ def to_cozy(document):
         ],
         "bills": bills,
         "detailed_bills": detailed_bills,
+        "documents": documents,
         "history_bills": history_bills
     }

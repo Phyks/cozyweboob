@@ -19,7 +19,7 @@ First, you need to have Weboob installed on your system.
 
 Typical command-line usage for this script is:
 ```bash
-cat konnectors.json | ./cozyweboob.py
+cat konnectors.json | python -m cozyweboob.__main__
 ```
 where `konnectors.json` is a valid JSON file defining konnectors to be used.
 
