@@ -54,6 +54,11 @@ It exposes a couple of routes:
 
 * the `/retrieve` route, which supports `POST` method and a single `path` `POST`
   parameter which is the path to the previously downloaded file to retrieve.
+  Note that this route will not delete the temporary file whose content has
+  been retrieved, and you should delete it manually.
+
+* the `/clean` route, which will delete all temporary downloaded files. This
+  route will return a JSON list of deleted folders.
 
 **IMPORTANT:** Note this small webserver is **not** production ready and only
 here as a proof of concept and to be used in a controlled development

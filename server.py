@@ -4,6 +4,7 @@ HTTP server wrapper around weboob
 """
 import logging
 import os
+import shutil
 import tempfile
 
 from bottle import post, request, route, run, static_file
@@ -38,6 +39,29 @@ def retrieve_view():
     return static_file(path.replace(tempfile.gettempdir(), './'),
                        tempfile.gettempdir(),
                        download=True)
+
+
+@route("/clean")
+def clean_view():
+    """
+    Delete all the temporary downloaded files. These are the
+    "cozyweboob-*-tmp" folders in your system tmp dir.
+    """
+    sys_tmp_dir = tempfile.gettempdir()
+    tmp_dirs = [
+        x
+        for x in os.listdir(sys_tmp_dir)
+        if os.path.isdir(os.path.join(sys_tmp_dir, x))
+    ]
+    removed_dirs = []
+    for tmp_dir in tmp_dirs:
+        if tmp_dir.startswith("cozyweboob-") and tmp_dir.endswith("-tmp"):
+            tmp_dir = os.path.join(sys_tmp_dir, tmp_dir)
+            removed_dirs.append(tmp_dir)
+            shutil.rmtree(tmp_dir)
+    return {
+        "removed_dirs": removed_dirs
+    }
 
 
 @route("/list")
