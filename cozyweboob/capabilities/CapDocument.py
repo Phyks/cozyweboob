@@ -2,8 +2,10 @@
 This module contains all the conversion functions associated to the Document
 capability.
 """
+import tempfile
+
 from cozyweboob.capabilities.base import clean_object
-from weboob.capabilities.bill import Bill
+from weboob.capabilities.bill import Bill, DocumentNotFound
 
 
 def fetch_subscriptions(document):
@@ -158,6 +160,42 @@ def fetch(document, fetch_actions):
     return (subscriptions, documents, bills, detailed_bills, history_bills)
 
 
+def download(document, ids):
+    """
+    Download all required documents from a CapDocument object.
+
+    Args:
+        document: The CapDocument object to fetch from.
+        ids: A list of document IDs to download.
+    Returns:
+        A dict associating requested IDs with paths to downloaded files. None
+        if no ids are passed.
+    """
+    if not ids:
+        # Do not do anything if no ids are passed
+        return None
+
+    # Create a tmp directory to store downloaded items
+    tmp_dir = tempfile.mkdtemp(suffix='-tmp', prefix='cozyweboob-')
+
+    # Download every requested document
+    downloaded_documents = {}
+    for doc_id in ids:
+        try:
+            downloaded_content = document.download_document(doc_id)
+        except DocumentNotFound:
+            downloaded_documents[doc_id] = None
+            continue
+        with tempfile.NamedTemporaryFile(mode="w+",
+                                         dir=tmp_dir,
+                                         delete=False) as tmp_file:
+            tmp_file.write(downloaded_content)
+            downloaded_documents[doc_id] = tmp_file.name
+
+    # Return a dict associating requested IDs and downloaded filenames
+    return downloaded_documents
+
+
 def to_cozy(document, actions=None):
     """
     Export a CapDocument object to a JSON-serializable dict, to pass it to Cozy
@@ -176,13 +214,33 @@ def to_cozy(document, actions=None):
     base_url = document.browser.BASEURL
 
     # Handle fetch actions
-    if actions["fetch"] is True or "CapDocument" in actions["fetch"]:
+    if actions["fetch"] is False:
+        fetch_actions = []
+    elif actions["fetch"] is True or "CapDocument" in actions["fetch"]:
         if actions["fetch"] is True:
             fetch_actions = actions["fetch"]
         else:
             fetch_actions = actions["fetch"]["CapDocument"]
-        subscriptions, documents, bills, detailed_bills, history_bills = fetch(
-            document, fetch_actions)
+    else:
+        fetch_actions = []
+    # Force-fetch documents if download is set to True
+    if actions["download"] is True:
+        fetch_actions = fetch_actions + ["documents"]
+    # Fetch items
+    subscriptions, documents, bills, detailed_bills, history_bills = fetch(
+        document, fetch_actions)
+
+    # Handle download actions
+    if actions["download"] is False:
+        downloaded_documents = None
+    elif actions["download"] is True or "CapDocument" in actions["download"]:
+        if actions["download"] is True:
+            download_ids = [doc.id for doc in documents]
+        else:
+            download_ids = actions["download"]["CapDocument"]
+        downloaded_documents = download(document, download_ids)
+    else:
+        downloaded_documents = None
 
     # Return a formatted dict with all the infos
     return {
@@ -193,5 +251,6 @@ def to_cozy(document, actions=None):
         "bills": bills,
         "detailed_bills": detailed_bills,
         "documents": documents,
-        "history_bills": history_bills
+        "history_bills": history_bills,
+        "downloaded": downloaded_documents
     }

@@ -33,19 +33,32 @@ Typical command-line usage for this script is:
 This script spawns a Bottle webserver, listening on `localhost:8080` (by
 default).
 
-It has a single route, the index route, which supports `POST` method to send a
-valid JSON string defining konnectors to be used in a `params` field. Typical
-example to send it some content is:
-```bash
-curl -X POST --data "params=$(cat konnectors.json)" "http://localhost:8080/"
-```
-where `konnectors.json` is a valid JSON file defining konnectors to be used.
+It exposes a couple of routes:
 
+* the `/fetch` route, which supports `POST` method to send a valid JSON string
+  defining konnectors to be used in a `params` field. Typical example to send
+  it some content is:
 
-The server also exposes a `/list` endpoint, which will provide you a JSON dump
-of all the available modules, their descriptions and the configuration options
-you should provide them.
+  ```bash
+  curl -X POST --data "params=$(cat konnectors.json)" "http://localhost:8080/"
+  ```
+  where `konnectors.json` is a valid JSON file defining konnectors to be used.
+  Downloaded files will be stored in a temporary directory, and their file URI
+  will be passed back in the output JSON. If you do not have a direct access
+  to the filesystem, you can use the `/retrieve` endpoint below to retrieve
+  such downloaded files through the network.
 
+* the `/list` route, which will provide you a JSON dump of all the available
+  modules, their descriptions and the configuration options you should provide
+  them.
+
+* the `/retrieve` route, which supports `POST` method and a single `path` `POST`
+  parameter which is the path to the previously downloaded file to retrieve.
+
+**IMPORTANT:** Note this small webserver is **not** production ready and only
+here as a proof of concept and to be used in a controlled development
+environment. The `/retrieve` route will basically provide anyone to access any
+file from your temp directory, which is a real security concern in production.
 
 Note: You can specify the host and port to listen on using the
 `COZYWEBOOB_HOST` and `COZYWEBOOB_PORT` environment variables.
@@ -66,6 +79,8 @@ Available commands are:
 * `GET /list` to list all available modules.
 * `POST /fetch JSON_PARAMS` where `JSON_PARAMS` is an input JSON for module
   parameters.
+  Downloaded files will be stored in a temporary directory, and their file URI
+  will be passed back in the output JSON.
 * `exit` to quit the script and end the conversation.
 
 JSON responses are the same one as from the HTTP server script. It is
@@ -107,8 +122,8 @@ map should have at the following three keys:
   of contents to fetch.
   Typically, you can pass `"fetch": { "CapDocument": ["bills"]}` to fetch only
   bills from the `CapDocuments` capability. You can also pass
-  `"download": { "CapDocument": ["someID"] }` to download a specific id (which
-  can be either type of fields in the `CapDocument` capability).
+  `"download": { "CapDocument": ["someID"] }` to download a specific document,
+  identified by its ID.
   If not provided, the default is to fetch only, and do not download anything.
 
 

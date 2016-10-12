@@ -4,13 +4,13 @@ HTTP server wrapper around weboob
 """
 import logging
 import os
+import tempfile
 
-from bottle import post, request, response, route, run
+from bottle import post, request, route, run, static_file
 
 from cozyweboob import main as cozyweboob
 from cozyweboob import WeboobProxy
 from cozyweboob.tools.env import is_in_debug_mode
-from cozyweboob.tools.jsonwriter import pretty_json
 
 # Module specific logger
 logger = logging.getLogger(__name__)
@@ -22,18 +22,22 @@ def fetch_view():
     Fetch from weboob modules.
     """
     params = request.forms.get("params")
-    response.content_type = "application/json"
-    return pretty_json(cozyweboob(params))
+    return cozyweboob(params)
 
 
-@post("/download")
-def download_view():
+@post("/retrieve")
+def retrieve_view():
     """
-    Download from weboob modules.
+    Retrieve a previously downloaded file from weboob modules.
+
+    Note: Beware, this route is meant to be used in a controlled development
+    environment and can result in leakage of information from your temp
+    default directory.
     """
-    params = request.forms.get("params")
-    response.content_type = "application/json"
-    # TODO return pretty_json(proxy.download(params))
+    path = request.forms.get("path")
+    return static_file(path.replace(tempfile.gettempdir(), './'),
+                       tempfile.gettempdir(),
+                       download=True)
 
 
 @route("/list")
@@ -42,8 +46,7 @@ def list_view():
     List all available weboob modules and their configuration options.
     """
     proxy = WeboobProxy()
-    response.content_type = "application/json"
-    return pretty_json(proxy.list_modules())
+    return proxy.list_modules()
 
 
 def init():
