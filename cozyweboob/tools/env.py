@@ -11,4 +11,7 @@ def is_in_debug_mode():
     Returns:
         true / false
     """
-    return "COZYWEBOOB_ENV" in os.environ and os.environ["COZYWEBOOB_ENV"] == "debug"
+    return (
+        "COZYWEBOOB_ENV" in os.environ and
+        os.environ["COZYWEBOOB_ENV"] == "debug"
+    )

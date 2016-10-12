@@ -20,4 +20,7 @@ class DummyProgress:
         pass
 
     def prompt(self, message):
+        """
+        Prompt function. Not implemented.
+        """
         raise NotImplementedError()

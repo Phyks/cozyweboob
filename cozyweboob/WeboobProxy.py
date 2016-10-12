@@ -13,8 +13,9 @@ import logging
 from weboob.core import Weboob
 from weboob.exceptions import ModuleInstallError
 
-from tools.progress import DummyProgress
-import tools.weboob_tools as weboob_tools
+import cozyweboob.tools.weboob_tools as weboob_tools
+
+from cozyweboob.tools.progress import DummyProgress
 
 
 # Module specific logger
@@ -68,13 +69,13 @@ class WeboobProxy(object):
         # Install modules if required
         for infos in modules.values():
             if infos is not None and (
-                not infos.is_installed() or
-                not infos.is_local()
+                    not infos.is_installed() or
+                    not infos.is_local()
             ):
                 try:
                     repositories.install(infos, progress=DummyProgress())
-                except ModuleInstallError as e:
-                    logger.info(str(e))
+                except ModuleInstallError as exception:
+                    logger.info(str(exception))
         return {
             module_name: dict(infos.dump())
             for module_name, infos in modules.items()

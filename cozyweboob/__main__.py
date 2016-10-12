@@ -13,9 +13,9 @@ from getpass import getpass
 
 from requests.utils import dict_from_cookiejar
 
-from WeboobProxy import WeboobProxy
-from tools.env import is_in_debug_mode
-from tools.jsonwriter import pretty_json
+from cozyweboob.WeboobProxy import WeboobProxy
+from cozyweboob.tools.env import is_in_debug_mode
+from cozyweboob.tools.jsonwriter import pretty_json
 
 
 # Module specific logger
@@ -67,7 +67,10 @@ def main_fetch(used_modules):
                         fetching_function(
                             backend,
                             # If no actions specified, fetch but don't download
-                            module.get("actions", {"fetch": True, "download": False})
+                            module.get("actions", {
+                                "fetch": True,
+                                "download": False
+                            })
                         )
                     )
                 except AttributeError:
@@ -83,9 +86,9 @@ def main_fetch(used_modules):
             except AttributeError:
                 # Avoid an AttributeError if no session is used for this module
                 fetched_data[module["id"]]["cookies"] = None
-        except Exception as e:
+        except Exception as exception:
             # Store any error happening in a dedicated field
-            fetched_data[module["id"]]["error"] = e
+            fetched_data[module["id"]]["error"] = exception
             if is_in_debug_mode():
                 # Reraise if in debug
                 raise

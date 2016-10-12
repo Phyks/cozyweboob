@@ -18,12 +18,12 @@ def clean_object(obj, base_url=None):
     # Convert object to a dict of its fields
     obj = obj.to_dict()
     # Clean the various fields to be JSON-serializable
-    for k, v in obj.items():
-        if empty(v):
+    for key, value in obj.items():
+        if empty(value):
             # Replace empty values by None, avoid "NotLoaded is not
             # serializable" error
-            obj[k] = None
-        elif k == "url" and base_url:
+            obj[key] = None
+        elif key == "url" and base_url:
             # Render full absolute URLs
-            obj[k] = base_url + v
+            obj[key] = base_url + value
     return obj
