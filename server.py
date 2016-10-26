@@ -22,7 +22,7 @@ def fetch_view():
     """
     Fetch from weboob modules.
     """
-    params = request.forms.get("params")
+    params = request.body.read()
     return cozyweboob(params)
 
 

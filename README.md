@@ -36,11 +36,11 @@ default).
 It exposes a couple of routes:
 
 * the `/fetch` route, which supports `POST` method to send a valid JSON string
-  defining konnectors to be used in a `params` field. Typical example to send
+  defining konnectors to be used as the request body. Typical example to send
   it some content is:
 
   ```bash
-  curl -X POST --data "params=$(cat konnectors.json)" "http://localhost:8080/"
+  curl -X POST --data "$(cat konnectors.json)" "http://localhost:8080/"
   ```
   where `konnectors.json` is a valid JSON file defining konnectors to be used.
   Downloaded files will be stored in a temporary directory, and their file URI
