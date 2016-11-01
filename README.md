@@ -57,8 +57,8 @@ It exposes a couple of routes:
   Note that this route will not delete the temporary file whose content has
   been retrieved, and you should delete it manually.
 
-* the `/clean` route, which will delete all temporary downloaded files. This
-  route will return a JSON list of deleted folders.
+* the `/clean` route (`POST` method), which will delete all temporary
+  downloaded files. This route will return a JSON list of deleted folders.
 
 **IMPORTANT:** Note this small webserver is **not** production ready and only
 here as a proof of concept and to be used in a controlled development
@@ -86,7 +86,7 @@ Available commands are:
   parameters.
   Downloaded files will be stored in a temporary directory, and their file URI
   will be passed back in the output JSON.
-* `GET /clean` to clean temporary downloaded files.
+* `POST /clean` to clean temporary downloaded files.
 * `exit` to quit the script and end the conversation.
 
 JSON responses are the same one as from the HTTP server script. It is

@@ -42,7 +42,7 @@ def retrieve_view():
                        download=True)
 
 
-@route("/clean")
+@post("/clean")
 def clean_view():
     """
     Delete all the temporary downloaded files. These are the

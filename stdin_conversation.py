@@ -56,7 +56,7 @@ def process_query(query):
         # List modules view
         logger.info("Calling /list view.")
         return list_view()
-    elif query == "GET /clean":
+    elif query == "POST /clean":
         # Clean view
         logger.info("Calling /clean view")
         return clean_view()
@@ -72,7 +72,7 @@ def process_query(query):
     else:
         # Invalid query
         logger.error("Invalid query, exiting: %s" % query)
-        return
+        sys.exit(1)
 
 
 def main():
