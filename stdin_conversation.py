@@ -33,6 +33,13 @@ def list_view():
     return json_dump(proxy.list_modules())
 
 
+def clean_view():
+    """
+    Clean temporary downloaded files.
+    """
+    return json_dump(clean())
+
+
 def process_query(query):
     """
     Process input query on the command-line.
@@ -52,7 +59,7 @@ def process_query(query):
     elif query == "GET /clean":
         # Clean view
         logger.info("Calling /clean view")
-        return clean()
+        return clean_view()
     elif query.startswith("POST /fetch"):
         # Fetch modules view
         logger.info("Calling /fetch view.")

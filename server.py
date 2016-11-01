@@ -48,7 +48,7 @@ def clean_view():
     Delete all the temporary downloaded files. These are the
     "cozyweboob-*-tmp" folders in your system tmp dir.
     """
-    return clean()
+    return pretty_json(clean())
 
 
 @route("/list")

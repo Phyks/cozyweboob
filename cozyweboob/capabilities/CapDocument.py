@@ -5,7 +5,7 @@ capability.
 import tempfile
 
 from cozyweboob.capabilities.base import clean_object
-from weboob.capabilities.bill import Bill, DocumentNotFound
+from weboob.capabilities.bill import Bill, DocumentNotFound, SubscriptionNotFound
 
 
 def fetch_subscriptions(document):
@@ -183,7 +183,8 @@ def download(document, ids):
     for doc_id in ids:
         try:
             downloaded_content = document.download_document(doc_id)
-        except DocumentNotFound:
+        except (DocumentNotFound, SubscriptionNotFound):
+            print(doc_id)
             downloaded_documents[doc_id] = None
             continue
         with tempfile.NamedTemporaryFile(mode="w+",
@@ -224,8 +225,8 @@ def to_cozy(document, actions=None):
     else:
         fetch_actions = []
     # Force-fetch documents if download is set to True
-    if actions["download"] is True:
-        fetch_actions = fetch_actions + ["documents"]
+    if actions["download"] is True and fetch_actions is not True:
+        fetch_actions += ["documents"]
     # Fetch items
     subscriptions, documents, bills, detailed_bills, history_bills = fetch(
         document, fetch_actions)
@@ -234,8 +235,15 @@ def to_cozy(document, actions=None):
     if actions["download"] is False:
         downloaded_documents = None
     elif actions["download"] is True or "CapDocument" in actions["download"]:
-        if actions["download"] is True:
-            download_ids = [doc.id for doc in documents]
+        if actions["download"] is True:  # Download everything
+            download_ids = []
+            for subscription in subscriptions:
+                # Download documents
+                for doc in documents[subscription.id]:
+                    download_ids.append(doc["id"])
+                # Download bills
+                for bill in bills[subscription.id]:
+                    download_ids.append(bill["id"])
         else:
             download_ids = actions["download"]["CapDocument"]
         downloaded_documents = download(document, download_ids)
