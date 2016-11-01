@@ -1,7 +1,9 @@
 """
 CozyWeboob main module
 """
-from cozyweboob.WeboobProxy import WeboobProxy
-from cozyweboob.__main__ import main_fetch, main
+from __future__ import absolute_import
 
-__all__ = ["WeboobProxy", "main_fetch", "main"]
+from cozyweboob.WeboobProxy import WeboobProxy
+from cozyweboob.__main__ import clean, main_fetch, main
+
+__all__ = ["WeboobProxy", "clean", "main_fetch", "main"]

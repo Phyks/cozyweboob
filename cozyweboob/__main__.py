@@ -1,13 +1,17 @@
 """
 Main script for this module
 """
+from __future__ import absolute_import
 from __future__ import print_function
 
 import collections
 import importlib
 import json
 import logging
+import os
+import shutil
 import sys
+import tempfile
 
 from getpass import getpass
 
@@ -25,6 +29,28 @@ logger = logging.getLogger(__name__)
 # Dynamic loading is required to be able to call them programatically.
 CAPABILITIES_CONVERSION_MODULES = importlib.import_module(".capabilities",
                                                           package="cozyweboob")
+
+
+def clean():
+    """
+    Delete all the temporary downloaded files. These are the
+    "cozyweboob-*-tmp" folders in your system tmp dir.
+    """
+    sys_tmp_dir = tempfile.gettempdir()
+    tmp_dirs = [
+        x
+        for x in os.listdir(sys_tmp_dir)
+        if os.path.isdir(os.path.join(sys_tmp_dir, x))
+    ]
+    removed_dirs = []
+    for tmp_dir in tmp_dirs:
+        if tmp_dir.startswith("cozyweboob-") and tmp_dir.endswith("-tmp"):
+            tmp_dir = os.path.join(sys_tmp_dir, tmp_dir)
+            removed_dirs.append(tmp_dir)
+            shutil.rmtree(tmp_dir)
+    return {
+        "removed_dirs": removed_dirs
+    }
 
 
 def main_fetch(used_modules):

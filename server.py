@@ -4,12 +4,12 @@ HTTP server wrapper around weboob
 """
 import logging
 import os
-import shutil
 import tempfile
 
 from bottle import post, request, route, run, static_file
 
 from cozyweboob import main as cozyweboob
+from cozyweboob import clean
 from cozyweboob import WeboobProxy
 from cozyweboob.tools.env import is_in_debug_mode
 
@@ -47,21 +47,7 @@ def clean_view():
     Delete all the temporary downloaded files. These are the
     "cozyweboob-*-tmp" folders in your system tmp dir.
     """
-    sys_tmp_dir = tempfile.gettempdir()
-    tmp_dirs = [
-        x
-        for x in os.listdir(sys_tmp_dir)
-        if os.path.isdir(os.path.join(sys_tmp_dir, x))
-    ]
-    removed_dirs = []
-    for tmp_dir in tmp_dirs:
-        if tmp_dir.startswith("cozyweboob-") and tmp_dir.endswith("-tmp"):
-            tmp_dir = os.path.join(sys_tmp_dir, tmp_dir)
-            removed_dirs.append(tmp_dir)
-            shutil.rmtree(tmp_dir)
-    return {
-        "removed_dirs": removed_dirs
-    }
+    return clean()
 
 
 @route("/list")
@@ -82,6 +68,11 @@ def init():
         logging.basicConfig(
             format='%(levelname)s: %(message)s',
             level=logging.INFO
+        )
+    else:
+        logging.basicConfig(
+            format='%(levelname)s: %(message)s',
+            level=logging.ERROR
         )
     # Ensure all modules are installed and up to date before starting the
     # server

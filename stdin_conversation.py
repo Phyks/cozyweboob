@@ -9,6 +9,7 @@ import logging
 import sys
 
 from cozyweboob import main as cozyweboob
+from cozyweboob import clean
 from cozyweboob import WeboobProxy
 from cozyweboob.tools.env import is_in_debug_mode
 from cozyweboob.tools.jsonwriter import pretty_json
@@ -48,9 +49,13 @@ def process_query(query):
         # List modules view
         logger.info("Calling /list view.")
         return list_view()
+    elif query == "GET /clean":
+        # Clean view
+        logger.info("Calling /clean view")
+        return clean()
     elif query.startswith("POST /fetch"):
         # Fetch modules view
-        logger.info("Calling /list view.")
+        logger.info("Calling /fetch view.")
         params = query.split()[2]
         return fetch_view(params)
     elif query == "exit":
@@ -72,6 +77,11 @@ def main():
         logging.basicConfig(
             format='%(levelname)s: %(message)s',
             level=logging.INFO
+        )
+    else:
+        logging.basicConfig(
+            format='%(levelname)s: %(message)s',
+            level=logging.ERROR
         )
     # Ensure all modules are installed and up to date before starting the
     # server

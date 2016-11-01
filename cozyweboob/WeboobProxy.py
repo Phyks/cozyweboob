@@ -6,6 +6,7 @@ Konnectors easily.
 Part of this code comes from [Kresus](https://github.com/bnjbvr/kresus/)
 written by bnjbvr and released under MIT.
 """
+from __future__ import absolute_import
 from __future__ import print_function
 
 import logging

@@ -86,6 +86,7 @@ Available commands are:
   parameters.
   Downloaded files will be stored in a temporary directory, and their file URI
   will be passed back in the output JSON.
+* `GET /clean` to clean temporary downloaded files.
 * `exit` to quit the script and end the conversation.
 
 JSON responses are the same one as from the HTTP server script. It is
