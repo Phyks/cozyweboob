@@ -150,10 +150,8 @@ def main(json_params):
         logger.error("Invalid JSON input.")
         sys.exit(-1)
 
-    # Output the JSON formatted results on stdout
-    return pretty_json(
-        main_fetch(konnectors)
-    )
+    # Return the dict results
+    return main_fetch(konnectors)
 
 
 if __name__ == '__main__':

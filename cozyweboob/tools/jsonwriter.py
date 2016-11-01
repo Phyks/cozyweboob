@@ -40,3 +40,17 @@ def pretty_json(obj):
     return json.dumps(obj, sort_keys=True,
                       indent=4, separators=(',', ': '),
                       cls=CustomJSONEncoder)
+
+
+def json_dump(obj):
+    """
+    JSON output, using the custom JSONEncoder.
+
+    Args:
+        obj: the object to JSON serialize.
+    Returns:
+        the JSON string.
+    """
+    return json.dumps(obj, sort_keys=True,
+                      separators=(',', ': '),
+                      cls=CustomJSONEncoder)

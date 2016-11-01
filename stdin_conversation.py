@@ -12,7 +12,7 @@ from cozyweboob import main as cozyweboob
 from cozyweboob import clean
 from cozyweboob import WeboobProxy
 from cozyweboob.tools.env import is_in_debug_mode
-from cozyweboob.tools.jsonwriter import pretty_json
+from cozyweboob.tools.jsonwriter import json_dump
 
 # Module specific logger
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def fetch_view(params):
     """
     Fetch from weboob modules.
     """
-    return pretty_json(cozyweboob(params))
+    return json_dump(cozyweboob(params))
 
 
 def list_view():
@@ -30,7 +30,7 @@ def list_view():
     List all available weboob modules and their configuration options.
     """
     proxy = WeboobProxy()
-    return pretty_json(proxy.list_modules())
+    return json_dump(proxy.list_modules())
 
 
 def process_query(query):
