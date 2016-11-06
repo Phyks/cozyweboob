@@ -96,6 +96,7 @@ def main():
     proxy = WeboobProxy()
     proxy.install_modules()
     logger.info("Starting server.")
+    print('UP')
     while True:
         line = sys.stdin.readline()
         if not line:
