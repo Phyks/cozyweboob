@@ -52,7 +52,9 @@ def process_query(query):
         - None if invalid query is received.
     """
     query = query.strip()
-    if query == "GET /list":
+    if query == "GET /ping":
+        return 'UP'
+    elif query == "GET /list":
         # List modules view
         logger.info("Calling /list view.")
         return list_view()
@@ -96,7 +98,6 @@ def main():
     proxy = WeboobProxy()
     proxy.install_modules()
     logger.info("Starting server.")
-    print('UP')
     while True:
         line = sys.stdin.readline()
         if not line:
