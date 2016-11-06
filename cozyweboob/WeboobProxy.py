@@ -104,7 +104,12 @@ class WeboobProxy(object):
                 weboob_tools.dictify_config_desc(module.config)
             )
             installed_modules[module_name]["website"] = module.website
-        return installed_modules
+        return {
+            'modules': [
+                dict(module, name=name)
+                for name, module in installed_modules.items()
+            ]
+        }
 
     def init_backend(self, modulename, parameters):
         """
